@@ -63,7 +63,8 @@ export async function ingestItem(
     msg_id: p.msgId,
     origin_node: p.originId,
     category: categoryName(p),
-    priority: p.type === PacketType.WARNING ? p.priority * 10 : p.priority, // warning: battery % in 10% steps
+    // 4-bit nibble, 0-15 (alerts_priority_valid). For warnings the nibble is the rider's battery in 10% steps.
+    priority: p.priority,
     lat: p.lat,
     lon: p.lon,
     created_at: new Date(p.createdAt * 1000).toISOString(),
