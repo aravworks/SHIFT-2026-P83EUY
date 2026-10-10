@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: VoltMesh Vehicle API
+  version: "1.0"
+  description: >
+    Lets an existing vehicle (scooter telematics unit, BMS gateway, or the rider's phone acting as a bridge)
+    report battery state, raise events, find stations with batteries and ask a station to hold one.
+    Base path: {SUPABASE_URL}/functions/v1/vehicle
+servers:
+  - url: https://YOUR-PROJECT.supabase.co/functions/v1/vehicle
+security:
+  - ApiKey: []
+paths:
+  /v1/telemetry:
+    post:
+      summary: Report battery state; server runs RangeCheck
+      description: >
+        Stores the sample and updates the vehicle's last-known state. If the vehicle profile has
+        km_per_pct and safety_margin set and a position is known, usable range = soc_pct x km_per_pct x (1 - safety_margin);
+        when no station with batteries available is within that range, a low_battery alert is raised (once while open).
+        If thermal_limit_c is set and temp_c >= it, a thermal alert is raised (once while open).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Telemetry" }
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TelemetryResult" }
+        "400": { $ref: "#/components/responses/Error" }
+        "401": { $ref: "#/components/responses/Error" }
+  /v1/events:
+    post:
+      summary: Report a vehicle-detected event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type]
+              properties:
+                type: { type: string, enum: [crash, stranded, thermal, other] }
+                lat: { type: number }
+                lon: { type: number }
+                recorded_at: { type: string, format: date-time }
+              description: lat/lon default to the vehicle's last known position.
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  msg_id: { type: integer, format: int64 }
+        "400": { $ref: "#/components/responses/Error" }
+  /v1/stations/nearby:
+    get:
+      summary: Stations ordered by distance, with batteries available
+      parameters:
+        - { name: lat, in: query, schema: { type: number }, description: Defaults to last known position }
+        - { name: lon, in: query, schema: { type: number } }
+        - { name: radius_km, in: query, schema: { type: number } }
+        - { name: limit, in: query, schema: { type: integer, maximum: 20, default: 5 } }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stations:
+                    type: array
+                    items: { $ref: "#/components/schemas/Station" }
+  /v1/reservations:
+    post:
+      summary: Ask a station to hold a swappable battery
+      description: >
+        Atomic: available = in-stock minus active holds, so two vehicles cannot claim the last battery.
+        The hold lasts HOLD_MINUTES (server setting). One active hold per vehicle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [station_id]
+              properties:
+                station_id: { type: string, format: uuid }
+                alert_msg_id: { type: integer, format: int64, description: Link to the low-battery alert }
+      responses:
+        "201":
+          description: Hold created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Reservation" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { description: No battery available, or vehicle already has an active hold, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /v1/reservations/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Hold status
+      responses:
+        "200":
+          description: OK
+          content: { application/json: { schema: { $ref: "#/components/schemas/Reservation" } } }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      summary: Cancel a hold
+      responses:
+        "200":
+          description: Cancelled
+          content: { application/json: { schema: { $ref: "#/components/schemas/Reservation" } } }
+        "409": { description: Hold is no longer active, content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Per-vehicle key (vm_...) issued once by the admin portal. Rotate from the Vehicles page.
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+    Telemetry:
+      type: object
+      required: [soc_pct]
+      properties:
+        soc_pct: { type: number, minimum: 0, maximum: 100 }
+        voltage_v: { type: number }
+        temp_c: { type: number }
+        lat: { type: number }
+        lon: { type: number }
+        speed_kmh: { type: number }
+        recorded_at: { type: string, format: date-time, description: Defaults to server time }
+    Station:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+        available: { type: integer }
+        distance_km: { type: number }
+        stock_updated_at: { type: string, format: date-time, nullable: true }
+    Reservation:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        station_id: { type: string, format: uuid }
+        status: { type: string, enum: [held, picked_up, expired, cancelled] }
+        expires_at: { type: string, format: date-time }
+    TelemetryResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        usable_range_km: { type: number, description: Present only when range profile and position are known }
+        reachable_stations:
+          type: array
+          items: { $ref: "#/components/schemas/Station" }
+        nearest_station_with_stock:
+          allOf: [{ $ref: "#/components/schemas/Station" }]
+          nullable: true
+        alerts:
+          type: array
+          items:
+            type: object
+            properties:
+              category: { type: string, enum: [low_battery, thermal] }
+              raised: { type: boolean, description: false when an open alert of this category already exists }
+              msg_id: { type: integer, format: int64 }
