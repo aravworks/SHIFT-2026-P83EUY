@@ -22,6 +22,10 @@ for (const name of NAMES) {
   await import(`../supabase/functions/${name}/index.ts`);
 }
 
+const REQUIRED_ENV = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "GROUP_KEY", "HOLD_MINUTES"];
+const missingEnv = () => REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv().length) console.warn(`Missing environment variables: ${missingEnv().join(", ")}`);
+
 const port = Number(process.env.PORT ?? 8787);
 
 createServer(async (nreq, nres) => {
@@ -30,7 +34,7 @@ createServer(async (nreq, nres) => {
 
     if (url.pathname === "/healthz" || url.pathname === "/") {
       nres.writeHead(200, { "Content-Type": "application/json" });
-      nres.end(JSON.stringify({ ok: true, service: "voltmesh-backend", functions: NAMES }));
+      nres.end(JSON.stringify({ ok: true, service: "voltmesh-backend", functions: NAMES, missing_env: missingEnv() }));
       return;
     }
 
@@ -72,7 +76,8 @@ createServer(async (nreq, nres) => {
     nres.end(Buffer.from(await res.arrayBuffer()));
   } catch (e) {
     console.error(e);
+    const missing = missingEnv();
     nres.writeHead(500, { "Content-Type": "application/json" });
-    nres.end(JSON.stringify({ error: "internal error" }));
+    nres.end(JSON.stringify({ error: "internal error", ...(missing.length ? { missing_env: missing } : {}) }));
   }
 }).listen(port, () => console.log(`voltmesh-backend listening on :${port}`));
