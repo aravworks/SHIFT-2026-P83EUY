@@ -1,0 +1,21 @@
+# Render Blueprint: the VoltMesh API as one always-on Node web service.
+# Database, auth, realtime and storage stay on Supabase.
+services:
+  - type: web
+    name: voltmesh-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    plan: free
+    envVars:
+      - key: SUPABASE_URL
+        value: https://vjoveulhzwpgkveausvt.supabase.co
+      # Secrets: enter these in the Render dashboard, never in this file.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GROUP_KEY
+        sync: false
+      - key: HOLD_MINUTES
+        value: "30"

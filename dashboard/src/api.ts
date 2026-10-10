@@ -3,7 +3,8 @@ import { supabase } from "./supabase";
 const base = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
 const anon = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
 
-export const functionsBase = `${base}/functions/v1`;
+// Point at the Render service with VITE_API_URL (e.g. https://voltmesh-api.onrender.com); defaults to Supabase Edge Functions.
+export const functionsBase = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? `${base}/functions/v1`;
 
 /** Call an Edge Function as the signed-in user. */
 export async function callFunction<T>(path: string, body?: unknown): Promise<T> {
