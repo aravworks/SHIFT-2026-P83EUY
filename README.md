@@ -44,10 +44,14 @@ docs/
   mesh-protocol.md    packet formats, routing rules, Android gotchas
   backend.md          Supabase schema and APIs
   demo-and-tasks.md   demo script, schedule, task sheet (V01-V20)
+  frontend.md         rider/station app screens and the admin portal
+  vehicle-integration.md  how a scooter plugs in (API, RangeCheck, holds)
+  api/vehicle-api.yaml    OpenAPI spec for the vehicle API
+  database-clustering.md  PostGIS spatial clustering for the map
   risks.md            weak points, principles, rules for AI agents, open questions
 ```
 
-Planned code directories (not yet created): `app/` (Android), `dashboard/` (web), `supabase/` (SQL + Edge Functions).
+Code: `backend/` (Supabase), `dashboard/` (fleet web UI). `app/` (rider/station app) is not created yet.
 
 ## Rules for AI agents working here
 
