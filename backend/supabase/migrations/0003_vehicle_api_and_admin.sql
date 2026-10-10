@@ -5,9 +5,9 @@ create or replace function app_role() returns text
 language sql stable as $$ select auth.jwt() -> 'app_metadata' ->> 'role' $$;
 
 -- ───────── Lock the admin portal behind login (replaces the anon-read demo policies) ─────────
-drop policy "dashboard read stations" on stations;
-drop policy "dashboard read alerts" on alerts;
-drop policy "dashboard read hops" on relay_hops;
+drop policy if exists "dashboard read stations" on stations;
+drop policy if exists "dashboard read alerts" on alerts;
+drop policy if exists "dashboard read hops" on relay_hops;
 
 create policy "staff read stations" on stations for select to authenticated
   using (app_role() in ('admin','fleet','station'));
@@ -20,7 +20,7 @@ revoke execute on function alert_clusters(double precision, int, boolean) from p
 revoke execute on function map_grid_clusters(int, int, boolean) from public, anon;
 
 -- Status changes only: nothing else on alerts is editable from the portal.
-drop policy "station/fleet update alert status" on alerts;
+drop policy if exists "station/fleet update alert status" on alerts;
 revoke update on alerts from anon, authenticated;
 grant update (status) on alerts to authenticated;
 create policy "staff update alert status" on alerts for update to authenticated
@@ -28,7 +28,17 @@ create policy "staff update alert status" on alerts for update to authenticated
   with check (app_role() in ('admin','fleet','station'));
 
 -- ───────── Alerts may now originate from a vehicle ─────────
-alter table alerts drop constraint alerts_ingress_check;
+-- Constraint names differ between setups, so find any check on alerts that mentions ingress.
+do $$
+declare c text;
+begin
+  for c in select conname from pg_constraint
+           where conrelid = 'public.alerts'::regclass and contype = 'c'
+             and pg_get_constraintdef(oid) ilike '%ingress%'
+  loop
+    execute format('alter table public.alerts drop constraint %I', c);
+  end loop;
+end $$;
 alter table alerts add constraint alerts_ingress_check check (ingress in ('direct','mesh','vehicle'));
 
 -- ───────── Vehicles ─────────
