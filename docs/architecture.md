@@ -42,14 +42,14 @@ Only native code can advertise over BLE and use Wi-Fi Direct.
 | Wi-Fi Direct | Not available | `WifiP2pManager` |
 | Relay with screen off | No | Foreground service |
 
-Options: WebView + JS bridge (rejected), React Native/Expo + native module (fallback only if no one knows Compose), **Kotlin + Compose (chosen)**, web dashboard (chosen for fleets). Re-check Web Bluetooth status before relying on any change.
+Options: WebView + JS bridge (rejected), **React Native/Expo + native module (chosen)** (due to team skillset constraints), web dashboard (chosen for fleets). Re-check Web Bluetooth status before relying on any change. Note that a custom Native Module will be required for BLE advertising and Wi-Fi direct.
 
 ## App stack
 
 | Layer | Choice | Why |
 |-------|--------|-----|
-| App | Kotlin, Compose, single Activity, min SDK 29 | Wi-Fi Direct config builder needs API 29 |
-| Background | Foreground `MeshService` (`connectedDevice` type) | Relays with screen off |
+| App | React Native (Expo) | Faster UI iterations and team familiarity |
+| Background | Native Android Module + Foreground `MeshService` | Relays with screen off and handles BLE/Wi-Fi Direct APIs |
 | Local storage | Room (or SQLite) | Carried alerts, cached stock, relay log |
 | Maps | osmdroid, pre-cached tiles | Offline, no API key |
 | Backend client | Supabase Kotlin client or Ktor/OkHttp | Gateway upload, provisioning |

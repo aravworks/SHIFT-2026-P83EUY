@@ -1,0 +1,17 @@
+project_id = "voltmesh"
+
+[api]
+port = 54321
+
+[db]
+port = 54322
+major_version = 15
+
+[functions.provision]
+verify_jwt = false # called by the app at first launch, before it has any session
+
+[functions.ingest]
+verify_jwt = false # demo-grade; production: per-device keys / signed requests
+
+[functions.sos]
+verify_jwt = false

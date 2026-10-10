@@ -23,7 +23,7 @@ An SOS-only mesh has a cold-start problem (nobody keeps an app open for a rare e
 ## Design decisions (fixed)
 
 - **BLE** carries discovery and compact (24-byte) data; **Wi-Fi Direct** carries larger payloads. No other transport.
-- Rider and station devices: native **Kotlin + Jetpack Compose**, min SDK 29. Mesh code lives in a foreground `MeshService`; never in browser JS.
+- Rider and station devices: **React Native/Expo + custom Native Modules**, min SDK 29. Mesh code lives in a foreground `MeshService` natively; bridged to JS for the UI.
 - Fleet dashboard: **React + Vite + Leaflet + Supabase realtime** (read-only).
 - Backend: **new Supabase project** (Postgres, Edge Functions, Realtime, Storage).
 - Android only (iPhones can't do background BLE + Wi-Fi Direct relaying).
