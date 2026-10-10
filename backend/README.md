@@ -41,3 +41,11 @@ Link to a hosted project: `supabase link --project-ref <ref>`, `supabase db push
 - Portal access is role-based: `auth.users.raw_app_meta_data.role` = `admin`, `fleet` or `station`. Migration 0003 removes the anonymous read policies from the earlier demo, so the dashboard now requires login.
 - Required secret: `HOLD_MINUTES` (battery hold duration; no default on purpose).
 - Not yet run: no Deno or Supabase CLI was available when this was written, so the Edge Functions are not type-checked and the migrations have not been applied. First task: `supabase start`, apply migrations, register a vehicle, and exercise each endpoint.
+
+## Live deployment (Supabase project `voltmesh`, ref `vjoveulhzwpgkveausvt`)
+
+- Migrations 0001-0004 applied by hand in the SQL editor. The live `alerts` table has extra constraints not in `0001` (priority 0-15, lat/lon pair, per-field checks); treat the live schema as the source of truth.
+- Functions deployed (`supabase functions deploy --use-api`): `provision`, `ingest`, `sos`, `vehicle`, `admin`.
+- Secrets set: `GROUP_KEY` (random, demo-grade), `HOLD_MINUTES=30`.
+- Verified with a test vehicle: input validation, telemetry storage, vehicle events, 404/401 paths. Not yet verified: range-check alerts and battery holds (need a station + vehicle profile), signed mesh packets, the portal UI, realtime.
+- Known gaps: see the dry-run list (open `provision`, no replay/rate limits, expired holds not auto-flipped).
