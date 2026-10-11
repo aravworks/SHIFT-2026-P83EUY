@@ -3,6 +3,7 @@ import { supabase } from "../supabase";
 import { useAuth } from "../auth";
 import { useFleet } from "../useFleetData";
 import { AlertCard } from "../components/AlertCard";
+import { AlertActions } from "../components/AlertActions";
 import type { Alert } from "../types";
 
 export function Alerts() {
@@ -63,7 +64,7 @@ export function Alerts() {
             {rows.length === 0 && <tr><td colSpan={5} className="muted">No alerts</td></tr>}
           </tbody>
         </table>
-        <div>{sel && <AlertCard alert={sel} hops={hops} stations={stations} />}</div>
+        <div className="stack">{sel && <AlertCard alert={sel} hops={hops} stations={stations} />}{sel && <AlertActions alert={sel} />}</div>
       </div>
       <p className="muted">An alert reaching the system is not help arriving: status changes come from people.</p>
     </>

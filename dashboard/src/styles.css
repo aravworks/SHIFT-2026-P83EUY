@@ -77,3 +77,8 @@ td.actions button { margin-right: 4px; }
   .spacer, .who { display: none; }
   .split { grid-template-columns: 1fr; }
 }
+
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.card.hold { box-shadow: none; border: 1px solid var(--line); }
+.row-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.row-inline select { flex: 1; min-width: 160px; }
