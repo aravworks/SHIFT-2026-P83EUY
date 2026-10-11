@@ -73,3 +73,12 @@ export interface Reservation {
   created_at: string;
   expires_at: string;
 }
+
+export interface HelpOffer {
+  id: string;
+  alert_msg_id: number;
+  helper_node: number;
+  eta_minutes: number | null;
+  status: "offered" | "withdrawn";
+  created_at: string;
+}

@@ -1,13 +1,16 @@
 import type { Alert, Hop, Station } from "../types";
+import { useFleet } from "../useFleetData";
 
 function seconds(from: string, to: string) {
   return Math.max(0, Math.round((new Date(to).getTime() - new Date(from).getTime()) / 1000));
 }
 
-/** Alert card: category, time, relay path (A -> B -> C -> Station), time to reach backend, status. */
+/** Alert card: category, time, relay path (A -> B -> C -> Station), time to reach backend, status, help offers. */
 export function AlertCard({ alert, hops, stations }: { alert: Alert; hops: Hop[]; stations: Station[] }) {
+  const { helpOffers } = useFleet();
   const stationName = new Map(stations.map((s) => [s.node_id, s.name ?? `Station ${s.node_id}`]));
   const path = hops.filter((h) => h.msg_id === alert.msg_id).sort((a, b) => a.hop - b.hop);
+  const offers = helpOffers.filter((o) => o.alert_msg_id === alert.msg_id);
   const label = (id: number) => stationName.get(id) ?? `Node ${id}`;
 
   return (
@@ -21,7 +24,7 @@ export function AlertCard({ alert, hops, stations }: { alert: Alert; hops: Hop[]
       <p>Reached backend after {seconds(alert.created_at, alert.received_at)} s</p>
       <div className="path">
         {path.length === 0 ? (
-          <em>{alert.ingress === "direct" ? "Direct upload, no relay hops" : "No hop log uploaded yet"}</em>
+          <em>{alert.ingress === "direct" ? "Direct upload, no relay hops" : alert.ingress === "vehicle" ? "Reported by the vehicle" : "No hop log uploaded yet"}</em>
         ) : (
           path.map((h, i) => (
             <span key={h.node_id}>
@@ -37,6 +40,19 @@ export function AlertCard({ alert, hops, stations }: { alert: Alert; hops: Hop[]
           ))
         )}
       </div>
+      {offers.length > 0 && (
+        <div className="offers">
+          <b>{offers.length} rider{offers.length > 1 ? "s" : ""} offered help</b>
+          <ul>
+            {offers.map((o) => (
+              <li key={o.id}>
+                Node {o.helper_node}
+                {o.eta_minutes != null ? ` · ETA ${o.eta_minutes} min` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

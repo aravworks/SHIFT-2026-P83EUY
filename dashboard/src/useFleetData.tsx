@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "./supabase";
 import { useAuth } from "./auth";
-import type { Alert, GridCluster, Hop, Reservation, Station, Vehicle } from "./types";
+import type { Alert, GridCluster, HelpOffer, Hop, Reservation, Station, Vehicle } from "./types";
 
 interface FleetData {
   alerts: Alert[];
@@ -9,6 +9,7 @@ interface FleetData {
   hops: Hop[];
   vehicles: Vehicle[];
   reservations: Reservation[];
+  helpOffers: HelpOffer[];
   clusters: GridCluster[];
   error: string | null;
   zoom: number;
@@ -31,6 +32,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const [hops, setHops] = useState<Hop[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [helpOffers, setHelpOffers] = useState<HelpOffer[]>([]);
   const [clusters, setClusters] = useState<GridCluster[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
 
   const load = useCallback(async () => {
     if (!supabase || !session || !role) return;
-    const [a, s, h, r, c, v] = await Promise.all([
+    const [a, s, h, r, c, v, ho] = await Promise.all([
       supabase.from("alerts").select("*").order("received_at", { ascending: false }).limit(500),
       supabase.from("station_availability").select("*"),
       supabase.from("relay_hops").select("*").order("hop"),
@@ -47,7 +49,9 @@ export function FleetProvider({ children }: { children: ReactNode }) {
       canSeeVehicles
         ? supabase.from("vehicles").select(VEHICLE_COLS).order("created_at", { ascending: false })
         : Promise.resolve({ data: [], error: null }),
+      supabase.from("help_offers").select("*").eq("status", "offered").order("created_at"),
     ]);
+    // help_offers errors are tolerated so the portal still loads before migration 0005 is applied
     const err = a.error ?? s.error ?? h.error ?? r.error ?? c.error ?? v.error;
     setError(err ? err.message : null);
     setAlerts((a.data as Alert[]) ?? []);
@@ -56,6 +60,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     setReservations((r.data as Reservation[]) ?? []);
     setClusters((c.data as GridCluster[]) ?? []);
     setVehicles((v.data as unknown as Vehicle[]) ?? []);
+    setHelpOffers((ho.data as HelpOffer[]) ?? []);
   }, [zoom, session, role, canSeeVehicles]);
 
   useEffect(() => {
@@ -70,6 +75,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "relay_hops" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "stations" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "reservations" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "help_offers" }, load)
       .subscribe();
     // vehicles/telemetry are not on Realtime (column-level grants): poll.
     const t = setInterval(load, 15000);
@@ -80,7 +86,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   }, [load, session, role]);
 
   return (
-    <Ctx.Provider value={{ alerts, stations, hops, vehicles, reservations, clusters, error, zoom, setZoom, refresh: load }}>
+    <Ctx.Provider value={{ alerts, stations, hops, vehicles, reservations, helpOffers, clusters, error, zoom, setZoom, refresh: load }}>
       {children}
     </Ctx.Provider>
   );

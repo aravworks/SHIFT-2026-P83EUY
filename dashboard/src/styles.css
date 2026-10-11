@@ -82,3 +82,6 @@ td.actions button { margin-right: 4px; }
 .card.hold { box-shadow: none; border: 1px solid var(--line); }
 .row-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .row-inline select { flex: 1; min-width: 160px; }
+
+.offers { margin-top: 10px; font-size: 13px; }
+.offers ul { margin: 4px 0 0; padding-left: 18px; }

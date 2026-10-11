@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 
 type Handler = (req: Request) => Response | Promise<Response>;
 
-const NAMES = ["provision", "ingest", "sos", "vehicle", "admin"];
+const NAMES = ["provision", "ingest", "sos", "vehicle", "admin", "help"];
 const MAX_BODY = 10 * 1024 * 1024; // bulk payloads are base64 in JSON
 
 const handlers = new Map<string, Handler>();

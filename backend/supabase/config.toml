@@ -21,3 +21,6 @@ verify_jwt = false # authenticated by per-vehicle x-api-key instead
 
 [functions.admin]
 verify_jwt = true  # admin portal sessions only (role also checked in code)
+
+[functions.help]
+verify_jwt = false # phones authenticate with an HMAC signature (demo-grade, like mesh packets)
