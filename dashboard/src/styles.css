@@ -90,3 +90,9 @@ td.actions button { margin-right: 4px; }
 
 .hops { margin-top: 10px; font-size: 12px; border-radius: 6px; }
 .hops th, .hops td { padding: 4px 6px; }
+
+.nearby { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.nearby h3 { margin: 0 0 6px; font-size: 15px; }
+.route-row { display: flex; flex-direction: column; font-size: 13px; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; background: #f9fafb; }
+.route-row.best { background: #ecfdf5; border: 1px solid #86efac; }
+.route-row span { color: #4b5563; }

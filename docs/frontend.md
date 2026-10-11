@@ -45,3 +45,7 @@ cp .env.example .env   # Supabase URL + anon key
 npm install
 npm run dev
 ```
+
+## Road routing to stations (OSRM)
+
+Selecting an alert on the Overview map draws road routes to the nearest three stations that have batteries available (green line, best route thicker) and lists distance and time. If the alert came from a vehicle with a profile and a known battery %, each route is marked within or beyond the usable range, using road distance rather than straight-line distance. Routing uses OSRM's public demo server by default (rate-limited, driving profile only, no uptime promise); set `VITE_OSRM_URL` to self-host. Times assume car speeds, not a scooter's.

@@ -3,6 +3,8 @@ import { useFleet } from "../useFleetData";
 import { MapView } from "../components/MapView";
 import { AlertCard } from "../components/AlertCard";
 import { buildRelayPath } from "../relayPath";
+import { useStationRoutes } from "../useStationRoutes";
+import { NearbyStations } from "../components/NearbyStations";
 
 function startOfToday() {
   const d = new Date();
@@ -17,6 +19,7 @@ export function Overview() {
   const today = alerts.filter((a) => new Date(a.received_at).getTime() >= startOfToday());
   const open = alerts.filter((a) => a.status === "open");
   const sel = alerts.find((a) => a.msg_id === selected);
+  const { routes, loading: routing, failed: routeFailed, rangeKm } = useStationRoutes(sel, stations, vehicles);
   const path = useMemo(() => (sel ? buildRelayPath(sel, hops, stations) : null), [sel, hops, stations]);
 
   return (
@@ -32,7 +35,7 @@ export function Overview() {
       </div>
       <div className="split">
         <div className="mapbox">
-          <MapView alerts={alerts} stations={stations} clusters={clusters} selected={selected} path={path} onSelect={setSelected} onZoom={setZoom} />
+          <MapView alerts={alerts} stations={stations} clusters={clusters} selected={selected} path={path} routes={routes} onSelect={setSelected} onZoom={setZoom} />
           {sel && <div className="overlay"><AlertCard alert={sel} hops={hops} stations={stations} /></div>}
         </div>
         <div className="panel feed">
@@ -44,6 +47,7 @@ export function Overview() {
               <span>{new Date(a.created_at).toLocaleTimeString()} · {a.ingress}</span>
             </button>
           ))}
+          {sel && <NearbyStations routes={routes} loading={routing} failed={routeFailed} rangeKm={rangeKm} />}
         </div>
       </div>
     </>

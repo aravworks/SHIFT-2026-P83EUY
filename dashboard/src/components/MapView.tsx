@@ -3,6 +3,7 @@ import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip
 import L from "leaflet";
 import type { Alert, GridCluster, Station } from "../types";
 import type { RelayPath } from "../relayPath";
+import type { StationRoute } from "../useStationRoutes";
 
 const COLORS: Record<Alert["category"], string> = {
   thermal: "#dc2626",
@@ -46,11 +47,12 @@ interface Props {
   clusters: GridCluster[];
   selected: number | null;
   path?: RelayPath | null;
+  routes?: StationRoute[];
   onSelect: (msgId: number) => void;
   onZoom: (z: number) => void;
 }
 
-export function MapView({ alerts, stations, clusters, selected, path, onSelect, onZoom }: Props) {
+export function MapView({ alerts, stations, clusters, selected, path, routes, onSelect, onZoom }: Props) {
   const [theme, setTheme] = useState<"dark" | "light">(savedTheme);
   const byId = new Map(alerts.map((a) => [a.msg_id, a]));
   // Default view: Varanasi (IIT BHU) until a station gives a better centre.
@@ -81,6 +83,17 @@ export function MapView({ alerts, stations, clusters, selected, path, onSelect, 
             </Tooltip>
           </Polyline>
         )}
+        {routes?.map((r, i) => (
+          <Polyline
+            key={r.station.id}
+            positions={r.points}
+            pathOptions={{ color: "#22c55e", weight: i === 0 ? 5 : 3, opacity: i === 0 ? 0.95 : 0.6, dashArray: i === 0 ? undefined : "6 8" }}
+          >
+            <Tooltip sticky>
+              {r.station.name ?? `Station ${r.station.node_id}`}: {r.distanceKm.toFixed(1)} km, {Math.round(r.durationMin)} min by road
+            </Tooltip>
+          </Polyline>
+        ))}
         {stations.map((s) => (
           <Marker key={s.id} position={[s.lat, s.lon]} icon={stationIcon(s.available)}>
             <Popup>
