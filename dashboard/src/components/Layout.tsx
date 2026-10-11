@@ -6,6 +6,7 @@ const NAV = [
   { to: "/", label: "Overview", roles: ["admin", "fleet", "station"] },
   { to: "/alerts", label: "Alerts", roles: ["admin", "fleet", "station"] },
   { to: "/stations", label: "Stations", roles: ["admin", "fleet", "station"] },
+  { to: "/devices", label: "Devices", roles: ["admin", "fleet", "station"] },
   { to: "/vehicles", label: "Vehicles", roles: ["admin", "fleet"] },
   { to: "/api", label: "Vehicle API", roles: ["admin", "fleet"] },
 ];

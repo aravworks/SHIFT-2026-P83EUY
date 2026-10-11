@@ -49,3 +49,14 @@ npm run dev
 ## Road routing to stations (OSRM)
 
 Selecting an alert on the Overview map draws road routes to the nearest three stations that have batteries available (green line, best route thicker) and lists distance and time. If the alert came from a vehicle with a profile and a known battery %, each route is marked within or beyond the usable range, using road distance rather than straight-line distance. Routing uses OSRM's public demo server by default (rate-limited, driving profile only, no uptime promise); set `VITE_OSRM_URL` to self-host. Times assume car speeds, not a scooter's.
+
+## Devices page (Web Bluetooth)
+
+`/devices` scans through the browser's own device chooser, connects, and reads the standard Battery and Device Information characteristics. A second panel reads or writes one GATT characteristic you name (for commands and readings), and a Share panel opens the system share sheet.
+
+What a browser can and cannot do:
+- Chrome and Edge only (desktop and Android), over HTTPS or localhost, each scan started by a click. Firefox and Safari have no Web Bluetooth.
+- The page cannot list nearby or connected devices by itself; the user picks in the chooser. Only Bluetooth Low Energy devices appear. Ordinary Bluetooth audio links (most headphone music connections) are not reachable.
+- Services must be declared before scanning (the "extra service UUIDs" field); anything else is blocked.
+- A BLE write carries at most a few hundred bytes. Files cannot go over Bluetooth from a web page. ShareIt used Wi-Fi, not Bluetooth; the Share panel hands files to the system share sheet (Quick Share, Nearby Share and so on).
+- This is also the starting point for reading a scooter's battery over BLE (task V19), if the scooter exposes a standard battery service. Not tested against any real device so far.

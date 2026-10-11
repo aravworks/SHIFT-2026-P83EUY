@@ -96,3 +96,5 @@ td.actions button { margin-right: 4px; }
 .route-row { display: flex; flex-direction: column; font-size: 13px; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; background: #f9fafb; }
 .route-row.best { background: #ecfdf5; border: 1px solid #86efac; }
 .route-row span { color: #4b5563; }
+
+.btlog { background: #0f172a; color: #cbd5e1; padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 12px; max-height: 220px; overflow: auto; }

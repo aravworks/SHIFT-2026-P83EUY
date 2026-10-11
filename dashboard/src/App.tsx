@@ -9,6 +9,7 @@ import { Alerts } from "./pages/Alerts";
 import { Stations } from "./pages/Stations";
 import { Vehicles } from "./pages/Vehicles";
 import { ApiDocs } from "./pages/ApiDocs";
+import { Devices } from "./pages/Devices";
 
 function Gate() {
   const { session, role, loading, signOut } = useAuth();
@@ -30,6 +31,7 @@ function Gate() {
           <Route index element={<Overview />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="stations" element={<Stations />} />
+          <Route path="devices" element={<Devices />} />
           {manager && <Route path="vehicles" element={<Vehicles />} />}
           {manager && <Route path="api" element={<ApiDocs />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
