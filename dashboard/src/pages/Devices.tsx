@@ -4,6 +4,15 @@ import {
   supportsBluetooth, supportsShare, toHex, writeCharacteristic,
 } from "../bluetooth";
 
+const NICK_KEY = "vm-bt-nicknames";
+function loadNicks(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(NICK_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
 interface Entry {
   device: BluetoothDevice;
   connected: boolean;
@@ -15,12 +24,27 @@ interface Entry {
 export function Devices() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [extra, setExtra] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [batteryOnly, setBatteryOnly] = useState(false);
+  const [nicks, setNicks] = useState<Record<string, string>>(loadNicks);
   const [msg, setMsg] = useState<string | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const watched = useRef(new Set<string>());
 
   const patch = (id: string, p: Partial<Entry>) => setEntries((es) => es.map((e) => (e.device.id === id ? { ...e, ...p } : e)));
   const addLog = (l: string) => setLog((x) => [`${new Date().toLocaleTimeString()}  ${l}`, ...x].slice(0, 30));
+
+  function rename(id: string, name: string) {
+    const next = { ...nicks, [id]: name };
+    if (!name.trim()) delete next[id];
+    setNicks(next);
+    try {
+      localStorage.setItem(NICK_KEY, JSON.stringify(next));
+    } catch {
+      /* storage unavailable: the label just won't persist */
+    }
+  }
+  const displayName = (e: Entry) => nicks[e.device.id] || e.info?.deviceName || e.device.name || "Unnamed device";
 
   function track(device: BluetoothDevice) {
     if (watched.current.has(device.id)) return;
@@ -39,7 +63,7 @@ export function Devices() {
   async function scan() {
     setMsg(null);
     try {
-      const device = await pickDevice(extra.split(",").filter((s) => s.trim()));
+      const device = await pickDevice({ extraServices: extra.split(",").filter((s) => s.trim()), namePrefix: prefix, batteryOnly });
       track(device);
       setEntries((es) => (es.some((e) => e.device.id === device.id) ? es : [{ device, connected: false }, ...es]));
       addLog(`Selected ${device.name ?? device.id}`);
@@ -90,7 +114,15 @@ export function Devices() {
         />
         <button onClick={scan} disabled={!supportsBluetooth}>Scan for devices</button>
       </div>
-      <p className="muted">Services you want to read or write later must be listed above before you scan; the browser blocks anything not declared.</p>
+      <div className="panel row">
+        <input placeholder="Name starts with (optional)" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
+        <label className="check"><input type="checkbox" checked={batteryOnly} onChange={(e) => setBatteryOnly(e.target.checked)} /> only devices advertising a battery service</label>
+      </div>
+      <p className="muted">
+        Most nearby devices do not broadcast a name, so the chooser shows only a hardware address for them. Filters above list just devices that do.
+        Tip: switch the target device's Bluetooth off and on while the chooser is open; the entry that disappears and returns is the one.
+        Services you want to read or write later must be listed in the first box before you scan.
+      </p>
       {msg && <p className="error">{msg}</p>}
 
       <table>
@@ -100,7 +132,11 @@ export function Devices() {
         <tbody>
           {entries.map((e) => (
             <tr key={e.device.id}>
-              <td><b>{e.device.name ?? "Unnamed device"}</b><br /><small>{e.device.id.slice(0, 12)}…</small></td>
+              <td>
+                <b>{displayName(e)}</b><br />
+                <small>{e.device.id.slice(0, 12)}…</small><br />
+                <input className="nick" placeholder="Your label" value={nicks[e.device.id] ?? ""} onChange={(ev) => rename(e.device.id, ev.target.value)} />
+              </td>
               <td>{e.connected ? "connected" : "not connected"}{e.error && <div className="error">{e.error}</div>}</td>
               <td>
                 {e.info ? (

@@ -102,3 +102,6 @@ td.actions button { margin-right: 4px; }
 /* dark map: invert the OSM tiles, keep markers and lines in their own colours */
 .map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
 .map-dark { background: #1b1b1b; }
+
+.check { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.nick { margin-top: 4px; width: 140px; font-size: 12px; padding: 3px 6px; }

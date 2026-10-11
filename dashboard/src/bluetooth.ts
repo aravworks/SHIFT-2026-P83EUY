@@ -18,12 +18,27 @@ export function normalizeUuid(raw: string): BluetoothServiceUUID {
   throw new Error(`"${raw}" is not a 16-bit (e.g. 180f) or full 128-bit UUID`);
 }
 
-/** Opens the browser's device chooser. Extra service UUIDs must be declared here to be usable later. */
-export function pickDevice(extraServices: string[] = []): Promise<BluetoothDevice> {
-  return navigator.bluetooth.requestDevice({
-    acceptAllDevices: true,
-    optionalServices: [...STANDARD_SERVICES, ...extraServices.map(normalizeUuid)],
-  });
+export interface ScanOptions {
+  /** Extra service UUIDs to allow later (must be declared at scan time). */
+  extraServices?: string[];
+  /** Only devices whose advertised name starts with this. */
+  namePrefix?: string;
+  /** Only devices advertising the standard battery service. */
+  batteryOnly?: boolean;
+}
+
+/**
+ * Opens the browser's device chooser. With no filters every nearby BLE device is listed, most of them anonymous
+ * (phones, watches and trackers hide their name); filters narrow the list to devices that advertise a name or service.
+ */
+export function pickDevice(opts: ScanOptions = {}): Promise<BluetoothDevice> {
+  const optionalServices = [...STANDARD_SERVICES, ...(opts.extraServices ?? []).map(normalizeUuid)];
+  const filters: BluetoothLEScanFilter[] = [];
+  if (opts.namePrefix?.trim()) filters.push({ namePrefix: opts.namePrefix.trim() });
+  if (opts.batteryOnly) filters.push({ services: ["battery_service"] });
+  return filters.length
+    ? navigator.bluetooth.requestDevice({ filters, optionalServices })
+    : navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices });
 }
 
 /** Devices this site was already granted access to (not supported in every Chrome version). */
@@ -37,6 +52,8 @@ export async function previouslyGranted(): Promise<BluetoothDevice[]> {
 }
 
 export interface DeviceInfo {
+  /** Name read from the device itself (Generic Access), which can differ from the advertised one. */
+  deviceName?: string;
   batteryPct?: number;
   manufacturer?: string;
   model?: string;
@@ -62,6 +79,11 @@ export async function connect(device: BluetoothDevice): Promise<BluetoothRemoteG
 export async function readInfo(device: BluetoothDevice): Promise<DeviceInfo> {
   const server = await connect(device);
   const info: DeviceInfo = {};
+
+  info.deviceName = await tryRead(async () => {
+    const ga = await server.getPrimaryService("generic_access");
+    return text(await (await ga.getCharacteristic("gap.device_name")).readValue());
+  });
 
   const battery = await tryRead(async () => {
     const svc = await server.getPrimaryService("battery_service");
