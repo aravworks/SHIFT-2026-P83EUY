@@ -13,13 +13,10 @@ const COLORS: Record<Alert["category"], string> = {
   other: "#6b7280",
 };
 
-const TILES = {
-  dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
-  },
-  light: { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "&copy; OpenStreetMap contributors" },
-} as const;
+// OpenStreetMap standard tiles for both themes. (CARTO's free dark tiles now demand an API key and return
+// a watermark tile.) The dark theme is a CSS filter over the same tiles; see .map-dark in styles.css.
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILE_ATTRIBUTION = "&copy; OpenStreetMap contributors";
 
 function savedTheme(): "dark" | "light" {
   try {
@@ -71,8 +68,9 @@ export function MapView({ alerts, stations, clusters, selected, path, routes, on
   return (
     <>
       <button className="map-theme" onClick={toggle}>{theme === "dark" ? "☀ Light map" : "🌙 Dark map"}</button>
+      <div className={`map-${theme}`} style={{ height: "100%", width: "100%" }}>
       <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
-        <TileLayer key={theme} attribution={TILES[theme].attribution} url={TILES[theme].url} />
+        <TileLayer attribution={TILE_ATTRIBUTION} url={TILE_URL} />
         <ZoomWatcher onZoom={onZoom} />
         {path && (
           <Polyline positions={path.points} pathOptions={{ color: "#ef4444", weight: 4, opacity: 0.9 }}>
@@ -123,6 +121,7 @@ export function MapView({ alerts, stations, clusters, selected, path, routes, on
           );
         })}
       </MapContainer>
+      </div>
     </>
   );
 }

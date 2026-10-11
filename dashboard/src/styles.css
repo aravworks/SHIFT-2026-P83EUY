@@ -98,3 +98,7 @@ td.actions button { margin-right: 4px; }
 .route-row span { color: #4b5563; }
 
 .btlog { background: #0f172a; color: #cbd5e1; padding: 12px; border-radius: 8px; margin-top: 16px; font-size: 12px; max-height: 220px; overflow: auto; }
+
+/* dark map: invert the OSM tiles, keep markers and lines in their own colours */
+.map-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+.map-dark { background: #1b1b1b; }
