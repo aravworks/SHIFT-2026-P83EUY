@@ -47,6 +47,7 @@ docs/
   frontend.md         rider/station app screens and the admin portal
   vehicle-integration.md  how a scooter plugs in (API, RangeCheck, holds)
   api/vehicle-api.yaml    OpenAPI spec for the vehicle API
+  staff-and-phone-api.md  portal actions, help offers, relay log, migrations 0005-0007
   database-clustering.md  PostGIS spatial clustering for the map
   risks.md            weak points, principles, rules for AI agents, open questions
 ```
