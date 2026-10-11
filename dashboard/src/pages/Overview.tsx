@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFleet } from "../useFleetData";
 import { MapView } from "../components/MapView";
 import { AlertCard } from "../components/AlertCard";
+import { buildRelayPath } from "../relayPath";
 
 function startOfToday() {
   const d = new Date();
@@ -16,6 +17,7 @@ export function Overview() {
   const today = alerts.filter((a) => new Date(a.received_at).getTime() >= startOfToday());
   const open = alerts.filter((a) => a.status === "open");
   const sel = alerts.find((a) => a.msg_id === selected);
+  const path = useMemo(() => (sel ? buildRelayPath(sel, hops, stations) : null), [sel, hops, stations]);
 
   return (
     <>
@@ -25,12 +27,12 @@ export function Overview() {
         <Tile n={today.filter((a) => a.category === "low_battery").length} label="warnings raised today" />
         <Tile n={today.filter((a) => a.ingress === "mesh").length} label="delivered via mesh today" />
         <Tile n={today.filter((a) => a.ingress === "vehicle").length} label="from vehicles today" />
-        <Tile n={reservations.filter((r) => r.status === "held").length} label="active battery holds" />
+        <Tile n={reservations.filter((r) => r.status === "held" && new Date(r.expires_at) > new Date()).length} label="active battery holds" />
         <Tile n={vehicles.length} label="registered vehicles" />
       </div>
       <div className="split">
         <div className="mapbox">
-          <MapView alerts={alerts} stations={stations} clusters={clusters} selected={selected} onSelect={setSelected} onZoom={setZoom} />
+          <MapView alerts={alerts} stations={stations} clusters={clusters} selected={selected} path={path} onSelect={setSelected} onZoom={setZoom} />
           {sel && <div className="overlay"><AlertCard alert={sel} hops={hops} stations={stations} /></div>}
         </div>
         <div className="panel feed">
