@@ -40,6 +40,26 @@ export function AlertCard({ alert, hops, stations }: { alert: Alert; hops: Hop[]
           ))
         )}
       </div>
+      {path.length > 0 && (
+        <table className="hops">
+          <thead>
+            <tr><th>Hop</th><th>Node</th><th>Via</th><th>Radio</th><th>RSSI</th><th>Power</th><th>Tag</th></tr>
+          </thead>
+          <tbody>
+            {path.map((h) => (
+              <tr key={h.node_id}>
+                <td>{h.hop}</td>
+                <td>{label(h.node_id)}</td>
+                <td>{h.prev_node != null ? label(h.prev_node) : "—"}</td>
+                <td>{h.transport}</td>
+                <td>{h.rssi != null ? `${h.rssi} dBm` : "—"}</td>
+                <td>{h.powered == null ? "—" : h.powered ? "charging" : "battery"}</td>
+                <td>{h.tag_valid == null ? "—" : h.tag_valid ? "✓ valid" : "✗ invalid"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       {offers.length > 0 && (
         <div className="offers">
           <b>{offers.length} rider{offers.length > 1 ? "s" : ""} offered help</b>

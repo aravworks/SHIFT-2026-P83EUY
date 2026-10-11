@@ -36,6 +36,8 @@ export interface Hop {
   powered: boolean | null;
   rssi: number | null;
   received_at: string;
+  prev_node?: number | null;
+  tag_valid?: boolean | null;
 }
 
 export interface GridCluster {

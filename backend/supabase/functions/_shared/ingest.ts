@@ -7,6 +7,10 @@ export interface Hop {
   powered?: boolean;
   rssi?: number;
   received_at?: string;
+  /** Node that handed the packet to this one (the packet's prevHopId as this node saw it). */
+  prev_node?: number;
+  /** Whether this node's own HMAC check passed, as reported by the node. */
+  tag_valid?: boolean;
 }
 
 export interface Item {
@@ -75,7 +79,14 @@ export async function ingestItem(
   if (error) return { ok: false, reason: error.message };
 
   if (item.hops?.length) {
-    const rows = item.hops.map((h) => ({ msg_id: p.msgId, ...h }));
+    const rows = item.hops.map((h) => ({
+      msg_id: p.msgId,
+      ...h,
+      // The gateway hop is verified here: we checked the tag, and the packet itself names the last relay.
+      ...(h.transport === "gateway"
+        ? { tag_valid: h.tag_valid ?? true, prev_node: h.prev_node ?? p.prevHopId }
+        : {}),
+    }));
     const { error: hopErr } = await db.from("relay_hops").upsert(rows, { onConflict: "msg_id,node_id" });
     if (hopErr) return { ok: false, msg_id: p.msgId, reason: hopErr.message };
   }
